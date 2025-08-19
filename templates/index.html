@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Executive Suite</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏢 AI Executive Suite</h1>
+            <p>Communicate with your AI CEO, CTO, and CFO</p>
+        </header>
+
+        <div class="agent-tabs">
+            <button class="tab-btn active" data-agent="ceo">💼 CEO</button>
+            <button class="tab-btn" data-agent="cto">💻 CTO</button>
+            <button class="tab-btn" data-agent="cfo">💰 CFO</button>
+            <button class="tab-btn" data-agent="dashboard">📊 Dashboard</button>
+        </div>
+
+        <div class="voice-controls">
+            <button id="voice-toggle" class="voice-btn" onclick="toggleVoiceMode()">
+                🎤 Talk Mode: OFF
+            </button>
+            <div class="language-selector">
+                <button id="lang-en" class="lang-btn active" onclick="setLanguage('en')">🇺🇸 EN</button>
+                <button id="lang-ja" class="lang-btn" onclick="setLanguage('ja')">🇯🇵 日本語</button>
+                <button id="lang-zh" class="lang-btn" onclick="setLanguage('zh')">🇨🇳 中文</button>
+            </div>
+            <div class="voice-status" id="voice-status">Voice recognition ready</div>
+        </div>
+
+        <!-- CEO Panel -->
+        <div class="agent-panel active" id="ceo-panel">
+            <div class="agent-info">
+                <h2>CEO - Strategic Leadership</h2>
+                <div id="ceo-info">
+                    <p><strong>Vision:</strong> <span id="ceo-vision">Loading...</span></p>
+                    <p><strong>Mission:</strong> <span id="ceo-mission">Loading...</span></p>
+                </div>
+            </div>
+            
+            <div class="chat-section">
+                <div class="chat-messages" id="ceo-messages"></div>
+                <div class="input-section">
+                    <textarea id="ceo-context" placeholder="Describe the business situation or decision needed..."></textarea>
+                    <div class="options-section">
+                        <label>Options (optional, one per line):</label>
+                        <textarea id="ceo-options" placeholder="Option 1&#10;Option 2&#10;Option 3"></textarea>
+                    </div>
+                    <button onclick="askCEO()" class="ask-btn">Ask CEO</button>
+                    <button onclick="startVoiceInput('ceo')" class="voice-input-btn" id="ceo-voice-btn">🎤 Speak</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTO Panel -->
+        <div class="agent-panel" id="cto-panel">
+            <div class="agent-info">
+                <h2>CTO - Technical Leadership</h2>
+                <div id="cto-info">
+                    <p><strong>Vision:</strong> <span id="cto-vision">Loading...</span></p>
+                    <div id="cto-principles"></div>
+                    <div id="cto-stack"></div>
+                </div>
+            </div>
+            
+            <div class="chat-section">
+                <div class="chat-messages" id="cto-messages"></div>
+                <div class="input-section">
+                    <textarea id="cto-context" placeholder="Describe the technical challenge or decision needed..."></textarea>
+                    <div class="form-row">
+                        <select id="cto-category">
+                            <option value="architecture">Architecture</option>
+                            <option value="security">Security</option>
+                            <option value="infrastructure">Infrastructure</option>
+                            <option value="development">Development</option>
+                            <option value="data">Data</option>
+                        </select>
+                        <select id="cto-impact">
+                            <option value="low">Low Impact</option>
+                            <option value="medium">Medium Impact</option>
+                            <option value="high">High Impact</option>
+                            <option value="critical">Critical Impact</option>
+                        </select>
+                    </div>
+                    <div class="options-section">
+                        <label>Technical Options (optional, one per line):</label>
+                        <textarea id="cto-options" placeholder="Option 1&#10;Option 2&#10;Option 3"></textarea>
+                    </div>
+                    <button onclick="askCTO()" class="ask-btn">Ask CTO</button>
+                    <button onclick="startVoiceInput('cto')" class="voice-input-btn" id="cto-voice-btn">🎤 Speak</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CFO Panel -->
+        <div class="agent-panel" id="cfo-panel">
+            <div class="agent-info">
+                <h2>CFO - Financial Leadership</h2>
+                <div id="cfo-info">
+                    <p><strong>Vision:</strong> <span id="cfo-vision">Loading...</span></p>
+                    <div id="cfo-budget"></div>
+                    <div id="cfo-health"></div>
+                </div>
+            </div>
+            
+            <div class="chat-section">
+                <div class="chat-messages" id="cfo-messages"></div>
+                <div class="input-section">
+                    <textarea id="cfo-context" placeholder="Describe the financial decision needed..."></textarea>
+                    <div class="form-row">
+                        <select id="cfo-category">
+                            <option value="budget">Budget</option>
+                            <option value="investment">Investment</option>
+                            <option value="cost_reduction">Cost Reduction</option>
+                            <option value="revenue">Revenue</option>
+                            <option value="risk_management">Risk Management</option>
+                        </select>
+                        <select id="cfo-risk">
+                            <option value="low">Low Risk</option>
+                            <option value="medium">Medium Risk</option>
+                            <option value="high">High Risk</option>
+                            <option value="critical">Critical Risk</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <input type="number" id="cfo-impact" placeholder="Financial Impact ($)" step="1000">
+                    </div>
+                    <div class="options-section">
+                        <label>Financial Options (optional, one per line):</label>
+                        <textarea id="cfo-options" placeholder="Option 1&#10;Option 2&#10;Option 3"></textarea>
+                    </div>
+                    <button onclick="askCFO()" class="ask-btn">Ask CFO</button>
+                    <button onclick="startVoiceInput('cfo')" class="voice-input-btn" id="cfo-voice-btn">🎤 Speak</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Panel -->
+        <div class="agent-panel" id="dashboard-panel">
+            <div class="dashboard">
+                <h2>Executive Dashboard</h2>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Recent CEO Decisions</h3>
+                        <div id="ceo-decisions"></div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Recent CTO Decisions</h3>
+                        <div id="cto-decisions"></div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Recent CFO Decisions</h3>
+                        <div id="cfo-decisions"></div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Financial Health</h3>
+                        <div id="financial-health"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
