@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Monitoring Dashboard - AI Executive Suite</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/monitoring.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>System Monitoring Dashboard</h1>
+            <div class="header-actions">
+                <button id="refresh-btn" class="btn btn-primary">Refresh</button>
+                <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Back to Main</a>
+            </div>
+        </header>
+
+        <!-- System Status Overview -->
+        <section class="status-overview">
+            <div class="status-card" id="system-status">
+                <h3>System Status</h3>
+                <div class="status-indicator" id="status-indicator">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Loading...</span>
+                </div>
+            </div>
+            <div class="status-card" id="uptime-card">
+                <h3>Uptime</h3>
+                <div class="metric-value" id="uptime-value">--</div>
+            </div>
+            <div class="status-card" id="requests-card">
+                <h3>Requests/Min</h3>
+                <div class="metric-value" id="requests-value">--</div>
+            </div>
+            <div class="status-card" id="response-time-card">
+                <h3>Avg Response Time</h3>
+                <div class="metric-value" id="response-time-value">--</div>
+            </div>
+        </section>
+
+        <!-- Alerts Section -->
+        <section class="alerts-section" id="alerts-section" style="display: none;">
+            <h2>Active Alerts</h2>
+            <div id="alerts-container"></div>
+        </section>
+
+        <!-- Performance Metrics -->
+        <section class="metrics-section">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h3>CPU Usage</h3>
+                    <canvas id="cpu-chart"></canvas>
+                    <div class="current-value" id="cpu-current">--</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Memory Usage</h3>
+                    <canvas id="memory-chart"></canvas>
+                    <div class="current-value" id="memory-current">--</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Response Time</h3>
+                    <canvas id="response-time-chart"></canvas>
+                    <div class="current-value" id="response-time-current">--</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Error Rate</h3>
+                    <canvas id="error-rate-chart"></canvas>
+                    <div class="current-value" id="error-rate-current">--</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Health Checks -->
+        <section class="health-section">
+            <h2>Health Checks</h2>
+            <div class="health-grid" id="health-checks"></div>
+        </section>
+
+        <!-- System Information -->
+        <section class="system-info-section">
+            <h2>System Information</h2>
+            <div class="info-grid" id="system-info"></div>
+        </section>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/monitoring-dashboard.js') }}"></script>
+</body>
+</html>

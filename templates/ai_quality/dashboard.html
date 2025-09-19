@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Quality Dashboard - AI Executive Suite</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ai-quality.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI Quality Dashboard</h1>
+            <div class="header-actions">
+                <select id="time-range" class="form-control">
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                </select>
+                <button id="refresh-btn" class="btn btn-primary">Refresh</button>
+                <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Back to Main</a>
+            </div>
+        </header>
+
+        <!-- Quality Overview -->
+        <section class="quality-overview">
+            <div class="metric-card">
+                <h3>Overall Satisfaction</h3>
+                <div class="metric-value" id="overall-satisfaction">--</div>
+                <div class="metric-trend" id="satisfaction-trend"></div>
+            </div>
+            <div class="metric-card">
+                <h3>Response Accuracy</h3>
+                <div class="metric-value" id="overall-accuracy">--</div>
+                <div class="metric-trend" id="accuracy-trend"></div>
+            </div>
+            <div class="metric-card">
+                <h3>Avg Response Time</h3>
+                <div class="metric-value" id="avg-response-time">--</div>
+                <div class="metric-trend" id="response-time-trend"></div>
+            </div>
+            <div class="metric-card">
+                <h3>Total Responses</h3>
+                <div class="metric-value" id="total-responses">--</div>
+                <div class="metric-trend" id="responses-trend"></div>
+            </div>
+        </section>
+
+        <!-- Executive Comparison -->
+        <section class="executive-comparison">
+            <h2>Executive Performance Comparison</h2>
+            <div class="comparison-grid" id="executive-comparison"></div>
+        </section>
+
+        <!-- Quality Trends -->
+        <section class="quality-trends">
+            <h2>Quality Trends</h2>
+            <div class="chart-container">
+                <canvas id="quality-trends-chart"></canvas>
+            </div>
+        </section>
+
+        <!-- Satisfaction Distribution -->
+        <section class="satisfaction-distribution">
+            <div class="chart-row">
+                <div class="chart-container">
+                    <h3>Satisfaction Distribution</h3>
+                    <canvas id="satisfaction-chart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Accuracy Distribution</h3>
+                    <canvas id="accuracy-chart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recommendations -->
+        <section class="recommendations-section" id="recommendations-section" style="display: none;">
+            <h2>Improvement Recommendations</h2>
+            <div id="recommendations-container"></div>
+        </section>
+
+        <!-- Low Quality Responses -->
+        <section class="low-quality-section">
+            <h2>Recent Low Quality Responses</h2>
+            <div class="controls">
+                <label for="quality-threshold">Quality Threshold:</label>
+                <select id="quality-threshold" class="form-control">
+                    <option value="2.0">2.0 and below</option>
+                    <option value="2.5" selected>2.5 and below</option>
+                    <option value="3.0">3.0 and below</option>
+                </select>
+                <button id="load-low-quality" class="btn btn-secondary">Load</button>
+            </div>
+            <div id="low-quality-responses" class="low-quality-list"></div>
+        </section>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/ai-quality-dashboard.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+# AI Executive Suite Backup Crontab
+# Full backup daily at 2 AM
+0 2 * * * /usr/local/bin/python /app/scripts/backup_service.py full_backup >> /app/logs/cron.log 2>&1
+
+# Incremental backup every 6 hours
+0 */6 * * * /usr/local/bin/python /app/scripts/backup_service.py incremental_backup >> /app/logs/cron.log 2>&1
+
+# Health check every hour
+0 * * * * /usr/local/bin/python /app/scripts/backup_service.py health_check >> /app/logs/cron.log 2>&1

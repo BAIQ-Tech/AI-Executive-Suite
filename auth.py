@@ -80,6 +80,110 @@ def create_user_session(user_id, ip_address):
     db.session.commit()
     return session_token
 
+def verify_mfa_token_login(user, method_type, token, ip_address):
+    """Verify MFA token during login."""
+    from services.mfa import MFAService
+    from models import MFAVerificationAttempt, PendingMFAVerification
+    
+    mfa_service = MFAService()
+    
+    # Get MFA method
+    mfa_method = user.get_mfa_method(method_type)
+    if not mfa_method or not mfa_method.is_enabled:
+        return False
+    
+    success = False
+    failure_reason = None
+    
+    try:
+        if method_type == 'totp':
+            # Verify TOTP token
+            if mfa_method.totp_secret:
+                secret = mfa_service.decrypt_sensitive_data(mfa_method.totp_secret)
+                success = mfa_service.verify_totp_token(secret, token)
+                if not success:
+                    failure_reason = 'invalid_totp'
+        
+        elif method_type in ['sms', 'email']:
+            # Verify SMS/Email code
+            pending = PendingMFAVerification.query.filter_by(
+                user_id=user.id,
+                method_type=method_type
+            ).order_by(PendingMFAVerification.created_at.desc()).first()
+            
+            if pending and not pending.is_expired() and not pending.is_max_attempts_reached():
+                success = pending.verify_code(token)
+                pending.increment_attempts()
+                if success:
+                    # Remove pending verification after successful login
+                    from models import db
+                    db.session.delete(pending)
+                else:
+                    failure_reason = 'invalid_code'
+            else:
+                failure_reason = 'expired_or_not_found'
+        
+        # Update last used timestamp if successful
+        if success:
+            mfa_method.last_used = datetime.utcnow()
+        
+    except Exception as e:
+        current_app.logger.error(f"MFA verification error: {e}")
+        failure_reason = 'verification_error'
+    
+    # Log attempt
+    attempt = MFAVerificationAttempt(
+        user_id=user.id,
+        method_type=method_type,
+        ip_address=ip_address,
+        success=success,
+        failure_reason=failure_reason,
+        user_agent=request.headers.get('User-Agent')
+    )
+    from models import db
+    db.session.add(attempt)
+    db.session.commit()
+    
+    return success
+
+def verify_backup_code_login(user, backup_code, ip_address):
+    """Verify backup code during login."""
+    from models import MFAVerificationAttempt
+    
+    success = False
+    failure_reason = None
+    
+    try:
+        # Find matching backup code
+        for code_obj in user.get_unused_backup_codes():
+            if code_obj.verify_code(backup_code):
+                # Mark code as used
+                code_obj.mark_used()
+                success = True
+                break
+        
+        if not success:
+            failure_reason = 'invalid_backup_code'
+    
+    except Exception as e:
+        current_app.logger.error(f"Backup code verification error: {e}")
+        failure_reason = 'verification_error'
+    
+    # Log attempt
+    attempt = MFAVerificationAttempt(
+        user_id=user.id,
+        method_type='backup_code',
+        ip_address=ip_address,
+        success=success,
+        failure_reason=failure_reason,
+        user_agent=request.headers.get('User-Agent')
+    )
+    from models import db
+    db.session.add(attempt)
+    db.session.commit()
+    
+    return success
+
 @auth_bp.route('/login')
 def login_page():
     """Display login page."""
@@ -133,6 +237,9 @@ def login():
     data = request.json
     email = data.get('email', '').lower()
     password = data.get('password', '')
+    mfa_token = data.get('mfa_token', '')
+    mfa_method = data.get('mfa_method', '')
+    backup_code = data.get('backup_code', '')
     
     if not email or not password:
         return jsonify({'error': 'Email and password are required'}), 400
@@ -145,6 +252,30 @@ def login():
     if not user or not bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
         log_login_attempt(ip_address, 'email', email=email, success=False)
         return jsonify({'error': 'Invalid email or password'}), 401
+    
+    # Check if MFA is required
+    if user.has_mfa_enabled():
+        # If MFA token/backup code not provided, request MFA
+        if not mfa_token and not backup_code:
+            return jsonify({
+                'mfa_required': True,
+                'available_methods': [method.method_type for method in user.get_enabled_mfa_methods()],
+                'message': 'Multi-factor authentication required'
+            }), 200
+        
+        # Verify MFA
+        mfa_verified = False
+        
+        if backup_code:
+            # Verify backup code
+            mfa_verified = verify_backup_code_login(user, backup_code, ip_address)
+        elif mfa_token and mfa_method:
+            # Verify MFA token
+            mfa_verified = verify_mfa_token_login(user, mfa_method, mfa_token, ip_address)
+        
+        if not mfa_verified:
+            log_login_attempt(ip_address, 'email', email=email, success=False)
+            return jsonify({'error': 'Invalid MFA token or backup code'}), 401
     
     # Log successful login
     log_login_attempt(ip_address, 'email', email=email, success=True)
@@ -580,3 +711,83 @@ def revoke_session(session_id):
         'success': True,
         'message': 'Session revoked successfully'
     })
+
+@auth_bp.route('/api/auth/mfa/send-code', methods=['POST'])
+def send_mfa_code():
+    """Send MFA verification code for login."""
+    from services.mfa import MFAService
+    from models import PendingMFAVerification
+    
+    data = request.json
+    email = data.get('email', '').lower()
+    method_type = data.get('method_type', '')
+    
+    if not email or method_type not in ['sms', 'email']:
+        return jsonify({'error': 'Email and valid method type are required'}), 400
+    
+    # Find user
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    # Get MFA method
+    mfa_method = user.get_mfa_method(method_type)
+    if not mfa_method or not mfa_method.is_enabled:
+        return jsonify({'error': f'{method_type.upper()} MFA not enabled'}), 400
+    
+    mfa_service = MFAService()
+    
+    # Rate limiting
+    if mfa_service.is_rate_limited(user.id, f'{method_type}_login'):
+        return jsonify({'error': 'Too many requests. Please try again later.'}), 429
+    
+    try:
+        # Generate verification code
+        verification_code = mfa_service.generate_verification_code()
+        
+        # Send code
+        if method_type == 'sms':
+            sent = mfa_service.send_sms_verification(mfa_method.phone_number, verification_code, 'login')
+            contact_info = mfa_method.phone_number
+        else:  # email
+            sent = mfa_service.send_email_verification(mfa_method.email_address, verification_code, 'login')
+            contact_info = mfa_method.email_address
+        
+        if not sent:
+            return jsonify({'error': f'Failed to send {method_type} code'}), 500
+        
+        # Store pending verification
+        expires_at = datetime.utcnow() + timedelta(minutes=10)
+        
+        # Remove any existing pending verification for this user/method
+        existing = PendingMFAVerification.query.filter_by(
+            user_id=user.id,
+            method_type=method_type
+        ).first()
+        if existing:
+            db.session.delete(existing)
+        
+        pending = PendingMFAVerification(
+            user_id=user.id,
+            method_type=method_type,
+            code=verification_code,
+            contact_info=contact_info,
+            expires_at=expires_at
+        )
+        db.session.add(pending)
+        db.session.commit()
+        
+        # Mask contact info for response
+        if method_type == 'sms':
+            masked_contact = contact_info[-4:] if contact_info else 'phone'
+        else:
+            masked_contact = mfa_method._mask_email(contact_info) if hasattr(mfa_method, '_mask_email') else contact_info
+        
+        return jsonify({
+            'success': True,
+            'message': f'Verification code sent to {masked_contact}'
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"MFA code sending error: {e}")
+        return jsonify({'error': f'Failed to send {method_type} code'}), 500

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Personality Configuration - AI Executive Suite</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/personality.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>AI Personality Configuration</h1>
+            <p>Customize your AI executives' personalities, expertise, and communication styles</p>
+        </header>
+
+        <nav class="personality-nav">
+            <button class="nav-btn active" data-tab="profiles">My Profiles</button>
+            <button class="nav-btn" data-tab="create">Create Profile</button>
+            <button class="nav-btn" data-tab="public">Public Library</button>
+            <button class="nav-btn" data-tab="shared">Shared with Me</button>
+        </nav>
+
+        <!-- My Profiles Tab -->
+        <div id="profiles-tab" class="tab-content active">
+            <div class="profiles-header">
+                <h2>My Personality Profiles</h2>
+                <div class="filter-controls">
+                    <select id="executive-type-filter">
+                        <option value="">All Executive Types</option>
+                        <option value="ceo">CEO</option>
+                        <option value="cto">CTO</option>
+                        <option value="cfo">CFO</option>
+                    </select>
+                    <button id="refresh-profiles" class="btn btn-secondary">Refresh</button>
+                </div>
+            </div>
+            
+            <div id="profiles-grid" class="profiles-grid">
+                <!-- Profiles will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Create Profile Tab -->
+        <div id="create-tab" class="tab-content">
+            <div class="create-profile-form">
+                <h2>Create New Personality Profile</h2>
+                
+                <form id="profile-form">
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h3>Basic Information</h3>
+                        
+                        <div class="form-group">
+                            <label for="profile-name">Profile Name *</label>
+                            <input type="text" id="profile-name" name="name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profile-description">Description</label>
+                            <textarea id="profile-description" name="description" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="executive-type">Executive Type *</label>
+                                <select id="executive-type" name="executive_type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="ceo">CEO</option>
+                                    <option value="cto">CTO</option>
+                                    <option value="cfo">CFO</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="industry-specialization">Industry</label>
+                                <select id="industry-specialization" name="industry_specialization">
+                                    <option value="general">General</option>
+                                    <option value="technology">Technology</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="healthcare">Healthcare</option>
+                                    <option value="manufacturing">Manufacturing</option>
+                                    <option value="retail">Retail</option>
+                                    <option value="consulting">Consulting</option>
+                                    <option value="education">Education</option>
+                                    <option value="government">Government</option>
+                                    <option value="nonprofit">Nonprofit</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Communication Style -->
+                    <div class="form-section">
+                        <h3>Communication Style</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="communication-style">Style</label>
+                                <select id="communication-style" name="communication_style">
+                                    <option value="formal">Formal</option>
+                                    <option value="casual">Casual</option>
+                                    <option value="technical">Technical</option>
+                                    <option value="friendly">Friendly</option>
+                                    <option value="direct">Direct</option>
+                                    <option value="diplomatic">Diplomatic</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="decision-making-style">Decision Making</label>
+                                <select id="decision-making-style" name="decision_making_style">
+                                    <option value="analytical">Analytical</option>
+                                    <option value="intuitive">Intuitive</option>
+                                    <option value="collaborative">Collaborative</option>
+                                    <option value="directive">Directive</option>
+                                    <option value="consultative">Consultative</option>
+                                    <option value="consensus">Consensus</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Tone Preferences -->
+                        <div class="tone-preferences">
+                            <h4>Tone Preferences</h4>
+                            <div class="slider-group">
+                                <div class="slider-item">
+                                    <label>Formality</label>
+                                    <input type="range" id="formality" name="formality" min="0" max="1" step="0.1" value="0.7">
+                                    <span class="slider-value">0.7</span>
+                                </div>
+                                <div class="slider-item">
+                                    <label>Enthusiasm</label>
+                                    <input type="range" id="enthusiasm" name="enthusiasm" min="0" max="1" step="0.1" value="0.5">
+                                    <span class="slider-value">0.5</span>
+                                </div>
+                                <div class="slider-item">
+                                    <label>Directness</label>
+                                    <input type="range" id="directness" name="directness" min="0" max="1" step="0.1" value="0.6">
+                                    <span class="slider-value">0.6</span>
+                                </div>
+                                <div class="slider-item">
+                                    <label>Technical Depth</label>
+                                    <input type="range" id="technical-depth" name="technical_depth" min="0" max="1" step="0.1" value="0.7">
+                                    <span class="slider-value">0.7</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expertise and Experience -->
+                    <div class="form-section">
+                        <h3>Expertise and Experience</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="experience-level">Experience Level</label>
+                                <select id="experience-level" name="experience_level">
+                                    <option value="junior">Junior</option>
+                                    <option value="intermediate">Intermediate</option>
+                                    <option value="senior">Senior</option>
+                                    <option value="expert">Expert</option>
+                                    <option value="thought_leader">Thought Leader</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="risk-tolerance">Risk Tolerance</label>
+                                <select id="risk-tolerance" name="risk_tolerance">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="expertise-domains">Expertise Domains</label>
+                            <div id="expertise-domains" class="tag-input">
+                                <input type="text" id="expertise-input" placeholder="Add expertise domain...">
+                                <div id="expertise-tags" class="tags-container"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="background-context">Background Context</label>
+                            <textarea id="background-context" name="background_context" rows="4" 
+                                placeholder="Describe the executive's background, experience, and unique perspective..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Personality Traits -->
+                    <div class="form-section">
+                        <h3>Personality Traits</h3>
+                        <div class="personality-traits">
+                            <div class="slider-item">
+                                <label>Analytical</label>
+                                <input type="range" id="analytical" name="analytical" min="0" max="1" step="0.1" value="0.8">
+                                <span class="slider-value">0.8</span>
+                            </div>
+                            <div class="slider-item">
+                                <label>Collaborative</label>
+                                <input type="range" id="collaborative" name="collaborative" min="0" max="1" step="0.1" value="0.6">
+                                <span class="slider-value">0.6</span>
+                            </div>
+                            <div class="slider-item">
+                                <label>Innovative</label>
+                                <input type="range" id="innovative" name="innovative" min="0" max="1" step="0.1" value="0.7">
+                                <span class="slider-value">0.7</span>
+                            </div>
+                            <div class="slider-item">
+                                <label>Detail Oriented</label>
+                                <input type="range" id="detail-oriented" name="detail_oriented" min="0" max="1" step="0.1" value="0.8">
+                                <span class="slider-value">0.8</span>
+                            </div>
+                            <div class="slider-item">
+                                <label>Decisive</label>
+                                <input type="range" id="decisive" name="decisive" min="0" max="1" step="0.1" value="0.7">
+                                <span class="slider-value">0.7</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Settings -->
+                    <div class="form-section">
+                        <h3>Profile Settings</h3>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="is-default" name="is_default">
+                                Set as default for this executive type
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="is-public" name="is_public">
+                                Make profile public (others can view and clone)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" id="test-profile" class="btn btn-secondary">Test Profile</button>
+                        <button type="submit" class="btn btn-primary">Create Profile</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Public Library Tab -->
+        <div id="public-tab" class="tab-content">
+            <div class="public-library">
+                <h2>Public Personality Library</h2>
+                <p>Discover and clone personality profiles shared by the community</p>
+                
+                <div class="library-filters">
+                    <select id="public-executive-filter">
+                        <option value="">All Executive Types</option>
+                        <option value="ceo">CEO</option>
+                        <option value="cto">CTO</option>
+                        <option value="cfo">CFO</option>
+                    </select>
+                    <select id="public-industry-filter">
+                        <option value="">All Industries</option>
+                        <option value="technology">Technology</option>
+                        <option value="finance">Finance</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="manufacturing">Manufacturing</option>
+                        <option value="retail">Retail</option>
+                        <option value="consulting">Consulting</option>
+                    </select>
+                </div>
+                
+                <div id="public-profiles-grid" class="profiles-grid">
+                    <!-- Public profiles will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Shared with Me Tab -->
+        <div id="shared-tab" class="tab-content">
+            <div class="shared-profiles">
+                <h2>Profiles Shared with Me</h2>
+                <p>Personality profiles that others have shared with you</p>
+                
+                <div id="shared-profiles-grid" class="profiles-grid">
+                    <!-- Shared profiles will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Card Template -->
+    <template id="profile-card-template">
+        <div class="profile-card" data-profile-id="">
+            <div class="profile-header">
+                <h3 class="profile-name"></h3>
+                <span class="profile-type"></span>
+            </div>
+            <div class="profile-info">
+                <p class="profile-description"></p>
+                <div class="profile-meta">
+                    <span class="industry"></span>
+                    <span class="experience"></span>
+                    <span class="usage-count"></span>
+                </div>
+            </div>
+            <div class="profile-actions">
+                <button class="btn btn-sm btn-secondary test-btn">Test</button>
+                <button class="btn btn-sm btn-secondary clone-btn">Clone</button>
+                <button class="btn btn-sm btn-primary edit-btn">Edit</button>
+                <button class="btn btn-sm btn-danger delete-btn">Delete</button>
+            </div>
+        </div>
+    </template>
+
+    <!-- Test Profile Modal -->
+    <div id="test-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Test Personality Profile</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="test-scenario">Test Scenario</label>
+                    <textarea id="test-scenario" rows="3" 
+                        placeholder="Enter a scenario or question to test how this personality would respond...">What should be our strategy for the next quarter?</textarea>
+                </div>
+                <div id="test-results" class="test-results" style="display: none;">
+                    <h4>Test Results</h4>
+                    <div id="test-response"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="run-test" class="btn btn-primary">Run Test</button>
+                <button class="modal-close btn btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/personality-config.js') }}"></script>
+</body>
+</html>

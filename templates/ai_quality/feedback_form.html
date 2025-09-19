@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Response Feedback - AI Executive Suite</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ai-quality.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI Response Feedback</h1>
+            <p>Help us improve AI response quality by providing your feedback</p>
+        </header>
+
+        <div class="feedback-form-container">
+            <form id="feedback-form" class="feedback-form">
+                <input type="hidden" id="decision-id" value="{{ decision_id }}">
+                
+                <div class="form-group">
+                    <label for="rating">Overall Satisfaction *</label>
+                    <div class="rating-options">
+                        {% for option in form_data.rating_options %}
+                        <label class="rating-option">
+                            <input type="radio" name="rating" value="{{ option.value }}" required>
+                            <span class="rating-label">{{ option.label }}</span>
+                            <span class="rating-stars">
+                                {% for i in range(option.value) %}★{% endfor %}
+                            </span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="accuracy-rating">Response Accuracy</label>
+                    <div class="accuracy-options">
+                        {% for option in form_data.accuracy_options %}
+                        <label class="accuracy-option">
+                            <input type="radio" name="accuracy_rating" value="{{ option.value }}">
+                            <span class="accuracy-label">{{ option.label }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="feedback-text">Additional Comments</label>
+                    <textarea id="feedback-text" name="feedback_text" rows="4" 
+                              placeholder="Please share any specific feedback about the AI response..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                    <button type="button" class="btn btn-secondary" onclick="window.close()">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="feedback-result" class="feedback-result" style="display: none;">
+            <div class="success-message">
+                <h3>Thank you for your feedback!</h3>
+                <p>Your input helps us improve the AI Executive Suite experience.</p>
+                <button class="btn btn-primary" onclick="window.close()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/ai-quality-feedback.js') }}"></script>
+</body>
+</html>

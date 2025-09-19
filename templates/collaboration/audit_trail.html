@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Trail - AI Executive Suite</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .audit-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .audit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .audit-filters {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .filter-label {
+            font-weight: bold;
+            font-size: 0.9em;
+            color: #333;
+        }
+        
+        .filter-input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        
+        .timeline-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .timeline-header {
+            background: #f5f5f5;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .timeline {
+            position: relative;
+            padding: 20px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 30px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e0e0e0;
+        }
+        
+        .timeline-event {
+            position: relative;
+            margin-bottom: 30px;
+            padding-left: 70px;
+        }
+        
+        .timeline-event::before {
+            content: '';
+            position: absolute;
+            left: 24px;
+            top: 10px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #2196F3;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px #2196F3;
+        }
+        
+        .event-icon {
+            position: absolute;
+            left: 10px;
+            top: 5px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1;
+        }
+        
+        .event-content {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .event-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .event-user {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .event-time {
+            font-size: 0.9em;
+            color: #999;
+            white-space: nowrap;
+        }
+        
+        .event-details {
+            font-size: 0.9em;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        .event-metadata {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            font-size: 0.8em;
+            color: #666;
+        }
+        
+        .event-type-decision { border-left-color: #4CAF50; }
+        .event-type-collaboration { border-left-color: #9C27B0; }
+        .event-type-comment { border-left-color: #2196F3; }
+        .event-type-document { border-left-color: #795548; }
+        .event-type-system { border-left-color: #607D8B; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2196F3;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.2s;
+        }
+        
+        .btn:hover {
+            background: #1976D2;
+        }
+        
+        .btn-secondary {
+            background: #666;
+        }
+        
+        .btn-secondary:hover {
+            background: #555;
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 0.9em;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 60px 20px;
+        }
+        
+        .empty-state i {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #2196F3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .audit-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .event-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            
+            .timeline-event {
+                padding-left: 50px;
+            }
+            
+            .timeline::before {
+                left: 20px;
+            }
+            
+            .timeline-event::before {
+                left: 14px;
+            }
+            
+            .event-icon {
+                left: 0;
+                width: 30px;
+                height: 30px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="audit-container">
+        <div class="audit-header">
+            <h1>Audit Trail</h1>
+            <div>
+                <button onclick="exportAuditTrail()" class="btn btn-secondary">Export</button>
+                <button onclick="refreshAuditTrail()" class="btn">Refresh</button>
+            </div>
+        </div>
+        
+        <div class="audit-filters">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label" for="decision-filter">Decision</label>
+                    <select class="filter-input" id="decision-filter">
+                        <option value="">All Decisions</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="user-filter">User</label>
+                    <select class="filter-input" id="user-filter">
+                        <option value="">All Users</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="event-type-filter">Event Type</label>
+                    <select class="filter-input" id="event-type-filter">
+                        <option value="">All Events</option>
+                        <option value="decision_created">Decision Created</option>
+                        <option value="decision_updated">Decision Updated</option>
+                        <option value="collaboration_started">Collaboration Started</option>
+                        <option value="comment_added">Comment Added</option>
+                        <option value="comment_edited">Comment Edited</option>
+                        <option value="user_invited">User Invited</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="date-from">From Date</label>
+                    <input type="date" class="filter-input" id="date-from">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="date-to">To Date</label>
+                    <input type="date" class="filter-input" id="date-to">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">&nbsp;</label>
+                    <button onclick="applyFilters()" class="btn btn-small">Apply Filters</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="total-events">0</div>
+                <div class="stat-label">Total Events</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="active-users">0</div>
+                <div class="stat-label">Active Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="decisions-affected">0</div>
+                <div class="stat-label">Decisions Affected</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="comments-total">0</div>
+                <div class="stat-label">Comments</div>
+            </div>
+        </div>
+        
+        <div class="timeline-container">
+            <div class="timeline-header">
+                <span>Event Timeline</span>
+                <span id="event-count">0 events</span>
+            </div>
+            <div class="timeline" id="timeline">
+                <div class="loading">Loading audit trail...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Audit trail data
+        let auditData = {
+            events: [],
+            filteredEvents: [],
+            stats: {}
+        };
+
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const decisionId = urlParams.get('decision_id');
+        const userId = urlParams.get('user_id');
+
+        async function loadAuditTrail() {
+            try {
+                let endpoint = '/api/collaboration/audit/system';
+                
+                if (decisionId) {
+                    endpoint = `/api/collaboration/audit/decision/${decisionId}`;
+                } else if (userId) {
+                    endpoint = `/api/collaboration/audit/user/${userId}`;
+                }
+                
+                const response = await fetch(endpoint);
+                if (response.ok) {
+                    const data = await response.json();
+                    auditData.events = data.audit_trail || [];
+                    auditData.filteredEvents = [...auditData.events];
+                    
+                    updateStats();
+                    updateTimeline();
+                } else {
+                    showError('Failed to load audit trail');
+                }
+            } catch (error) {
+                console.error('Error loading audit trail:', error);
+                showError('Error loading audit trail');
+            }
+        }
+
+        function updateStats() {
+            const events = auditData.filteredEvents;
+            
+            // Calculate statistics
+            const totalEvents = events.length;
+            const activeUsers = new Set(events.map(e => e.user_id).filter(id => id)).size;
+            const decisionsAffected = new Set(events.map(e => e.decision_id).filter(id => id)).size;
+            const commentsTotal = events.filter(e => e.event_type.includes('comment')).length;
+            
+            // Update display
+            document.getElementById('total-events').textContent = totalEvents;
+            document.getElementById('active-users').textContent = activeUsers;
+            document.getElementById('decisions-affected').textContent = decisionsAffected;
+            document.getElementById('comments-total').textContent = commentsTotal;
+            document.getElementById('event-count').textContent = `${totalEvents} event${totalEvents !== 1 ? 's' : ''}`;
+        }
+
+        function updateTimeline() {
+            const container = document.getElementById('timeline');
+            const events = auditData.filteredEvents;
+            
+            if (events.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div>📋</div>
+                        <p>No audit events found</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = events.map(event => renderEvent(event)).join('');
+        }
+
+        function renderEvent(event) {
+            const eventTypeClass = getEventTypeClass(event.event_type);
+            const icon = getEventIcon(event.event_type);
+            const color = getEventColor(event.event_type);
+            
+            return `
+                <div class="timeline-event">
+                    <div class="event-icon" style="background-color: ${color};">
+                        ${icon}
+                    </div>
+                    <div class="event-content ${eventTypeClass}">
+                        <div class="event-header">
+                            <div>
+                                <div class="event-title">${event.event_description}</div>
+                                <div class="event-user">
+                                    ${event.user ? `by ${event.user.name}` : 'System event'}
+                                </div>
+                            </div>
+                            <div class="event-time">${formatTime(event.created_at)}</div>
+                        </div>
+                        ${event.old_values && Object.keys(event.old_values).length > 0 ? `
+                            <div class="event-details">
+                                <strong>Changes:</strong> ${formatChanges(event.old_values, event.new_values)}
+                            </div>
+                        ` : ''}
+                        ${event.metadata && Object.keys(event.metadata).length > 0 ? `
+                            <div class="event-metadata">
+                                <strong>Details:</strong> ${formatMetadata(event.metadata)}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function getEventTypeClass(eventType) {
+            if (eventType.includes('decision')) return 'event-type-decision';
+            if (eventType.includes('collaboration') || eventType.includes('user_')) return 'event-type-collaboration';
+            if (eventType.includes('comment')) return 'event-type-comment';
+            if (eventType.includes('document')) return 'event-type-document';
+            return 'event-type-system';
+        }
+
+        function getEventIcon(eventType) {
+            const iconMap = {
+                'decision_created': '📝',
+                'decision_updated': '✏️',
+                'decision_status_changed': '🔄',
+                'collaboration_started': '👥',
+                'user_invited': '📧',
+                'user_joined': '👋',
+                'comment_added': '💬',
+                'comment_edited': '✏️',
+                'comment_deleted': '🗑️',
+                'comment_pinned': '📌',
+                'document_uploaded': '📄'
+            };
+            return iconMap[eventType] || '📋';
+        }
+
+        function getEventColor(eventType) {
+            const colorMap = {
+                'decision_created': '#4CAF50',
+                'decision_updated': '#2196F3',
+                'decision_status_changed': '#FF9800',
+                'collaboration_started': '#9C27B0',
+                'user_invited': '#00BCD4',
+                'user_joined': '#4CAF50',
+                'comment_added': '#2196F3',
+                'comment_edited': '#FF9800',
+                'comment_deleted': '#F44336',
+                'comment_pinned': '#FF5722',
+                'document_uploaded': '#795548'
+            };
+            return colorMap[eventType] || '#607D8B';
+        }
+
+        function formatChanges(oldValues, newValues) {
+            const changes = [];
+            for (const key in newValues) {
+                if (oldValues[key] !== newValues[key]) {
+                    changes.push(`${key}: "${oldValues[key]}" → "${newValues[key]}"`);
+                }
+            }
+            return changes.join(', ');
+        }
+
+        function formatMetadata(metadata) {
+            return Object.entries(metadata)
+                .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+                .join(', ');
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+
+        function applyFilters() {
+            const decisionFilter = document.getElementById('decision-filter').value;
+            const userFilter = document.getElementById('user-filter').value;
+            const eventTypeFilter = document.getElementById('event-type-filter').value;
+            const dateFrom = document.getElementById('date-from').value;
+            const dateTo = document.getElementById('date-to').value;
+
+            auditData.filteredEvents = auditData.events.filter(event => {
+                // Decision filter
+                if (decisionFilter && event.decision_id != decisionFilter) return false;
+                
+                // User filter
+                if (userFilter && event.user_id != userFilter) return false;
+                
+                // Event type filter
+                if (eventTypeFilter && event.event_type !== eventTypeFilter) return false;
+                
+                // Date filters
+                const eventDate = new Date(event.created_at);
+                if (dateFrom && eventDate < new Date(dateFrom)) return false;
+                if (dateTo && eventDate > new Date(dateTo + 'T23:59:59')) return false;
+                
+                return true;
+            });
+
+            updateStats();
+            updateTimeline();
+        }
+
+        function refreshAuditTrail() {
+            loadAuditTrail();
+        }
+
+        function exportAuditTrail() {
+            const data = auditData.filteredEvents;
+            const csv = convertToCSV(data);
+            downloadCSV(csv, 'audit_trail.csv');
+        }
+
+        function convertToCSV(data) {
+            const headers = ['Timestamp', 'Event Type', 'Description', 'User', 'Decision ID', 'Comment ID'];
+            const rows = data.map(event => [
+                event.created_at,
+                event.event_type,
+                event.event_description,
+                event.user ? event.user.name : '',
+                event.decision_id || '',
+                event.comment_id || ''
+            ]);
+            
+            return [headers, ...rows].map(row => 
+                row.map(field => `"${field}"`).join(',')
+            ).join('\n');
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function showError(message) {
+            const container = document.getElementById('timeline');
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div>⚠️</div>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAuditTrail();
+            
+            // Set default date range (last 30 days)
+            const today = new Date();
+            const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            
+            document.getElementById('date-to').value = today.toISOString().split('T')[0];
+            document.getElementById('date-from').value = thirtyDaysAgo.toISOString().split('T')[0];
+        });
+    </script>
+</body>
+</html>

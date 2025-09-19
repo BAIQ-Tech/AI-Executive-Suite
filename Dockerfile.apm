@@ -1,0 +1,23 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install prometheus_client requests schedule psutil
+
+# Copy APM agent script
+COPY scripts/monitoring/apm_agent.py .
+
+# Create non-root user
+RUN useradd -m -u 1000 apmuser && chown -R apmuser:apmuser /app
+USER apmuser
+
+# Expose metrics port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/metrics || exit 1
+
+# Start APM agent
+CMD ["python", "apm_agent.py"]

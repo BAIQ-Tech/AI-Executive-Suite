@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # Load Balancer
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx-staging.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./static:/var/www/static
+    depends_on:
+      - app1
+      - app2
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # Application Instances (2 for staging)
+  app1:
+    #build:
+    #  context: .
+    #  dockerfile: Dockerfile.prod
+    image: ghcr.io/your-org/ai-executive-suite:develop
+    environment:
+      - FLASK_ENV=staging
+      - DATABASE_URL=postgresql://ai_exec_user:${DB_PASSWORD}@postgres:5432/ai_executive_suite_staging
+      - REDIS_URL=redis://redis:6379/0
+      - INSTANCE_ID=staging-app1
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  app2:
+    #build:
+    #  context: .
+    #  dockerfile: Dockerfile.prod
+    image: ghcr.io/your-org/ai-executive-suite:develop
+    environment:
+      - FLASK_ENV=staging
+      - DATABASE_URL=postgresql://ai_exec_user:${DB_PASSWORD}@postgres:5432/ai_executive_suite_staging
+      - REDIS_URL=redis://redis:6379/0
+      - INSTANCE_ID=staging-app2
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=ai_executive_suite_staging
+      - POSTGRES_USER=ai_exec_user
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_staging_data:/data
+    restart: unless-stopped
+    networks:
+      - app-network
+
+volumes:
+  postgres_staging_data:
+  redis_staging_data:
+
+networks:
+  app-network:
+    driver: bridge

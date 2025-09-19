@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Reports - AI Executive Suite</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .reports-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .reports-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .reports-title {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin: 0;
+        }
+        
+        .report-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .tab-button {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            color: #7f8c8d;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-button.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+        
+        .tab-button:hover {
+            color: #2980b9;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .report-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .success-rate-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .success-rate-card {
+            text-align: center;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        
+        .success-rate-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .success-rate-value.good {
+            color: #27ae60;
+        }
+        
+        .success-rate-value.warning {
+            color: #f39c12;
+        }
+        
+        .success-rate-value.poor {
+            color: #e74c3c;
+        }
+        
+        .success-rate-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .top-decisions-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .decision-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+        }
+        
+        .decision-info {
+            flex: 1;
+        }
+        
+        .decision-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .decision-meta {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        
+        .decision-score {
+            text-align: center;
+            min-width: 80px;
+        }
+        
+        .score-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #27ae60;
+        }
+        
+        .score-label {
+            font-size: 0.8em;
+            color: #7f8c8d;
+        }
+        
+        .opportunities-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .opportunity-item {
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+        }
+        
+        .opportunity-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .opportunity-title {
+            font-weight: bold;
+            color: #2c3e50;
+            flex: 1;
+        }
+        
+        .opportunity-priority {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .opportunity-priority.high {
+            background: #fdeaea;
+            color: #e74c3c;
+        }
+        
+        .opportunity-priority.medium {
+            background: #fef9e7;
+            color: #f39c12;
+        }
+        
+        .opportunity-priority.low {
+            background: #e8f4fd;
+            color: #3498db;
+        }
+        
+        .opportunity-description {
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+        
+        .opportunity-recommendations {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .opportunity-recommendations li {
+            padding: 5px 0;
+            color: #2c3e50;
+        }
+        
+        .opportunity-recommendations li:before {
+            content: "→ ";
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #e74c3c;
+            background: #fdeaea;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .filters-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .reports-header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .report-tabs {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .success-rate-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .decision-item {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reports-container">
+        <div class="reports-header">
+            <h1 class="reports-title">Analytics Reports</h1>
+            <div>
+                <a href="/analytics/dashboard" class="btn btn-primary">Dashboard</a>
+                <a href="/" class="btn btn-secondary">Back to Home</a>
+            </div>
+        </div>
+
+        <div class="report-tabs">
+            <button class="tab-button active" data-tab="success-rate">Success Rate</button>
+            <button class="tab-button" data-tab="top-performers">Top Performers</button>
+            <button class="tab-button" data-tab="opportunities">Opportunities</button>
+        </div>
+
+        <div class="filters-section">
+            <label>Time Range:</label>
+            <select id="timeRange" class="filter-select">
+                <option value="7">Last 7 days</option>
+                <option value="30" selected>Last 30 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="365">Last year</option>
+            </select>
+            <button id="refreshBtn" class="btn btn-primary">Refresh</button>
+        </div>
+
+        <!-- Success Rate Tab -->
+        <div id="success-rate" class="tab-content active">
+            <div class="report-section">
+                <h2 class="section-title">
+                    📊 Success Rate Analysis
+                </h2>
+                <div id="successRateLoading" class="loading">Loading success rate data...</div>
+                <div id="successRateError" class="error" style="display: none;">
+                    Error loading success rate data.
+                </div>
+                <div id="successRateContent" style="display: none;">
+                    <div class="success-rate-grid" id="successRateGrid">
+                        <!-- Success rate cards will be populated here -->
+                    </div>
+                    <div id="successRateRecommendations">
+                        <!-- Recommendations will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Performers Tab -->
+        <div id="top-performers" class="tab-content">
+            <div class="report-section">
+                <h2 class="section-title">
+                    🏆 Top Performing Decisions
+                </h2>
+                <div id="topPerformersLoading" class="loading">Loading top performers...</div>
+                <div id="topPerformersError" class="error" style="display: none;">
+                    Error loading top performers data.
+                </div>
+                <div id="topPerformersContent" style="display: none;">
+                    <ul class="top-decisions-list" id="topDecisionsList">
+                        <!-- Top decisions will be populated here -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Opportunities Tab -->
+        <div id="opportunities" class="tab-content">
+            <div class="report-section">
+                <h2 class="section-title">
+                    💡 Improvement Opportunities
+                </h2>
+                <div id="opportunitiesLoading" class="loading">Loading improvement opportunities...</div>
+                <div id="opportunitiesError" class="error" style="display: none;">
+                    Error loading opportunities data.
+                </div>
+                <div id="opportunitiesContent" style="display: none;">
+                    <ul class="opportunities-list" id="opportunitiesList">
+                        <!-- Opportunities will be populated here -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AnalyticsReports {
+            constructor() {
+                this.currentTab = 'success-rate';
+                this.currentTimeRange = 30;
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.loadCurrentTabData();
+            }
+
+            bindEvents() {
+                // Tab switching
+                document.querySelectorAll('.tab-button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        this.switchTab(e.target.dataset.tab);
+                    });
+                });
+
+                // Refresh button
+                document.getElementById('refreshBtn').addEventListener('click', () => {
+                    this.loadCurrentTabData();
+                });
+
+                // Time range filter
+                document.getElementById('timeRange').addEventListener('change', (e) => {
+                    this.currentTimeRange = parseInt(e.target.value);
+                    this.loadCurrentTabData();
+                });
+            }
+
+            switchTab(tabName) {
+                // Update tab buttons
+                document.querySelectorAll('.tab-button').forEach(button => {
+                    button.classList.remove('active');
+                });
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+                // Update tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tabName).classList.add('active');
+
+                this.currentTab = tabName;
+                this.loadCurrentTabData();
+            }
+
+            loadCurrentTabData() {
+                switch (this.currentTab) {
+                    case 'success-rate':
+                        this.loadSuccessRateData();
+                        break;
+                    case 'top-performers':
+                        this.loadTopPerformersData();
+                        break;
+                    case 'opportunities':
+                        this.loadOpportunitiesData();
+                        break;
+                }
+            }
+
+            async loadSuccessRateData() {
+                try {
+                    this.showLoading('successRate');
+                    
+                    const response = await fetch(`/analytics/api/success-rate-report?days=${this.currentTimeRange}`);
+                    if (!response.ok) throw new Error('Failed to fetch data');
+                    
+                    const data = await response.json();
+                    this.renderSuccessRateData(data);
+                    this.hideLoading('successRate');
+
+                } catch (error) {
+                    console.error('Error loading success rate data:', error);
+                    this.showError('successRate');
+                }
+            }
+
+            async loadTopPerformersData() {
+                try {
+                    this.showLoading('topPerformers');
+                    
+                    const response = await fetch(`/analytics/api/top-performing-decisions?days=${this.currentTimeRange}&limit=10`);
+                    if (!response.ok) throw new Error('Failed to fetch data');
+                    
+                    const data = await response.json();
+                    this.renderTopPerformersData(data.decisions || []);
+                    this.hideLoading('topPerformers');
+
+                } catch (error) {
+                    console.error('Error loading top performers data:', error);
+                    this.showError('topPerformers');
+                }
+            }
+
+            async loadOpportunitiesData() {
+                try {
+                    this.showLoading('opportunities');
+                    
+                    const response = await fetch(`/analytics/api/improvement-opportunities?days=${this.currentTimeRange}`);
+                    if (!response.ok) throw new Error('Failed to fetch data');
+                    
+                    const data = await response.json();
+                    this.renderOpportunitiesData(data.opportunities || []);
+                    this.hideLoading('opportunities');
+
+                } catch (error) {
+                    console.error('Error loading opportunities data:', error);
+                    this.showError('opportunities');
+                }
+            }
+
+            renderSuccessRateData(data) {
+                const grid = document.getElementById('successRateGrid');
+                grid.innerHTML = '';
+
+                if (!data.success_rates) {
+                    grid.innerHTML = '<p>No success rate data available.</p>';
+                    return;
+                }
+
+                // Overall success rate
+                if (data.success_rates.overall) {
+                    this.createSuccessRateCard(grid, 'Overall', data.success_rates.overall);
+                }
+
+                // Executive success rates
+                ['ceo', 'cto', 'cfo'].forEach(exec => {
+                    if (data.success_rates[exec]) {
+                        this.createSuccessRateCard(grid, exec.toUpperCase(), data.success_rates[exec]);
+                    }
+                });
+
+                // Render recommendations
+                const recommendationsDiv = document.getElementById('successRateRecommendations');
+                if (data.recommendations && data.recommendations.length > 0) {
+                    recommendationsDiv.innerHTML = `
+                        <h3>Recommendations</h3>
+                        <ul>
+                            ${data.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                        </ul>
+                    `;
+                } else {
+                    recommendationsDiv.innerHTML = '<p>No specific recommendations at this time.</p>';
+                }
+            }
+
+            createSuccessRateCard(container, label, rateData) {
+                const rate = rateData.rate || 0;
+                const percentage = (rate * 100).toFixed(1);
+                
+                let rateClass = 'good';
+                if (rate < 0.5) rateClass = 'poor';
+                else if (rate < 0.7) rateClass = 'warning';
+
+                const card = document.createElement('div');
+                card.className = 'success-rate-card';
+                card.innerHTML = `
+                    <div class="success-rate-value ${rateClass}">${percentage}%</div>
+                    <div class="success-rate-label">${label}</div>
+                    <div style="font-size: 0.8em; color: #7f8c8d; margin-top: 5px;">
+                        ${rateData.successful || 0} / ${rateData.total_rated || 0} decisions
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+
+            renderTopPerformersData(decisions) {
+                const list = document.getElementById('topDecisionsList');
+                list.innerHTML = '';
+
+                if (decisions.length === 0) {
+                    list.innerHTML = '<li class="decision-item">No top performing decisions found for this time period.</li>';
+                    return;
+                }
+
+                decisions.forEach(decision => {
+                    const item = document.createElement('li');
+                    item.className = 'decision-item';
+                    
+                    const createdDate = new Date(decision.created_at).toLocaleDateString();
+                    const executiveType = decision.executive_type ? decision.executive_type.toUpperCase() : 'Unknown';
+                    const effectivenessScore = (decision.effectiveness_score * 100).toFixed(0);
+                    
+                    item.innerHTML = `
+                        <div class="decision-info">
+                            <div class="decision-title">${decision.title}</div>
+                            <div class="decision-meta">
+                                ${executiveType} • ${createdDate} • ${decision.category || 'Uncategorized'}
+                                ${decision.financial_impact ? ` • $${decision.financial_impact.toLocaleString()}` : ''}
+                            </div>
+                        </div>
+                        <div class="decision-score">
+                            <div class="score-value">${effectivenessScore}%</div>
+                            <div class="score-label">Effectiveness</div>
+                        </div>
+                    `;
+                    list.appendChild(item);
+                });
+            }
+
+            renderOpportunitiesData(opportunities) {
+                const list = document.getElementById('opportunitiesList');
+                list.innerHTML = '';
+
+                if (opportunities.length === 0) {
+                    list.innerHTML = '<li class="opportunity-item">No improvement opportunities identified. Great job!</li>';
+                    return;
+                }
+
+                opportunities.forEach(opportunity => {
+                    const item = document.createElement('li');
+                    item.className = 'opportunity-item';
+                    
+                    item.innerHTML = `
+                        <div class="opportunity-header">
+                            <div class="opportunity-title">${opportunity.title}</div>
+                            <div class="opportunity-priority ${opportunity.priority}">${opportunity.priority}</div>
+                        </div>
+                        <div class="opportunity-description">${opportunity.description}</div>
+                        <ul class="opportunity-recommendations">
+                            ${opportunity.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                        </ul>
+                    `;
+                    list.appendChild(item);
+                });
+            }
+
+            showLoading(section) {
+                document.getElementById(`${section}Loading`).style.display = 'block';
+                document.getElementById(`${section}Error`).style.display = 'none';
+                document.getElementById(`${section}Content`).style.display = 'none';
+            }
+
+            hideLoading(section) {
+                document.getElementById(`${section}Loading`).style.display = 'none';
+                document.getElementById(`${section}Content`).style.display = 'block';
+            }
+
+            showError(section) {
+                document.getElementById(`${section}Loading`).style.display = 'none';
+                document.getElementById(`${section}Error`).style.display = 'block';
+                document.getElementById(`${section}Content`).style.display = 'none';
+            }
+        }
+
+        // Initialize reports when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new AnalyticsReports();
+        });
+    </script>
+</body>
+</html>

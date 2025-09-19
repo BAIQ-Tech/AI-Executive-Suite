@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usage Analytics Dashboard - AI Executive Suite</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usage-analytics.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Usage Analytics Dashboard</h1>
+            <div class="header-actions">
+                <select id="time-range" class="form-control">
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                </select>
+                <button id="refresh-btn" class="btn btn-primary">Refresh</button>
+                <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Back to Main</a>
+            </div>
+        </header>
+
+        <!-- Usage Summary -->
+        <section class="usage-summary">
+            <div class="summary-card">
+                <h3>Total Events</h3>
+                <div class="summary-value" id="total-events">--</div>
+            </div>
+            <div class="summary-card">
+                <h3>Active Users</h3>
+                <div class="summary-value" id="active-users">--</div>
+            </div>
+            <div class="summary-card">
+                <h3>Avg Session Duration</h3>
+                <div class="summary-value" id="avg-session-duration">--</div>
+            </div>
+            <div class="summary-card">
+                <h3>Most Popular Feature</h3>
+                <div class="summary-value" id="most-popular-feature">--</div>
+            </div>
+            <div class="summary-card">
+                <h3>Peak Usage Hour</h3>
+                <div class="summary-value" id="peak-usage-hour">--</div>
+            </div>
+        </section>
+
+        <!-- Feature Usage Analysis -->
+        <section class="feature-usage-section">
+            <h2>Feature Usage Analysis</h2>
+            <div class="feature-usage-grid">
+                <div class="chart-container">
+                    <h3>Feature Usage Distribution</h3>
+                    <canvas id="feature-usage-chart"></canvas>
+                </div>
+                <div class="feature-stats-container">
+                    <h3>Feature Statistics</h3>
+                    <div id="feature-stats-list" class="feature-stats-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- User Behavior Analysis -->
+        <section class="user-behavior-section">
+            <h2>User Behavior Analysis</h2>
+            <div class="behavior-grid">
+                <div class="chart-container">
+                    <h3>User Engagement Distribution</h3>
+                    <canvas id="engagement-chart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Session Duration Distribution</h3>
+                    <canvas id="session-duration-chart"></canvas>
+                </div>
+            </div>
+            <div class="user-behavior-table-container">
+                <h3>Top Users by Engagement</h3>
+                <div id="user-behavior-table" class="user-behavior-table"></div>
+            </div>
+        </section>
+
+        <!-- Performance Issues -->
+        <section class="performance-issues-section" id="performance-issues-section" style="display: none;">
+            <h2>Performance Issues</h2>
+            <div id="performance-issues-container"></div>
+        </section>
+
+        <!-- Optimization Recommendations -->
+        <section class="recommendations-section" id="recommendations-section" style="display: none;">
+            <h2>Optimization Recommendations</h2>
+            <div class="recommendations-filter">
+                <label for="priority-filter">Filter by Priority:</label>
+                <select id="priority-filter" class="form-control">
+                    <option value="all">All Priorities</option>
+                    <option value="critical">Critical</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select>
+            </div>
+            <div id="recommendations-container"></div>
+        </section>
+
+        <!-- Usage Trends -->
+        <section class="usage-trends-section">
+            <h2>Usage Trends</h2>
+            <div class="chart-container">
+                <canvas id="usage-trends-chart"></canvas>
+            </div>
+        </section>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/usage-analytics-dashboard.js') }}"></script>
+</body>
+</html>

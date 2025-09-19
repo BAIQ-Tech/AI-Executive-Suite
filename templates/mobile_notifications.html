@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Settings - AI Executive Suite</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/mobile.css">
+    <style>
+        .notification-settings {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .settings-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .settings-section h3 {
+            margin: 0 0 15px 0;
+            color: #2d3748;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        
+        .setting-label {
+            flex: 1;
+        }
+        
+        .setting-label h4 {
+            margin: 0 0 4px 0;
+            color: #2d3748;
+            font-size: 1rem;
+        }
+        
+        .setting-label p {
+            margin: 0;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background: #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .toggle-switch.active {
+            background: #667eea;
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+        
+        .toggle-switch.active::after {
+            transform: translateX(26px);
+        }
+        
+        .time-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .time-input input {
+            padding: 8px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        
+        .permission-status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .permission-granted {
+            background: #f0fff4;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .permission-denied {
+            background: #fed7d7;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+        }
+        
+        .permission-default {
+            background: #fef5e7;
+            color: #744210;
+            border: 1px solid #f6e05e;
+        }
+        
+        .test-notification-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+        }
+        
+        .test-notification-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .test-notification-btn:disabled {
+            background: #e2e8f0;
+            color: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        @media (max-width: 768px) {
+            .notification-settings {
+                padding: 10px;
+            }
+            
+            .settings-section {
+                padding: 15px;
+            }
+            
+            .setting-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .toggle-switch {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification-settings">
+        <header style="text-align: center; margin-bottom: 30px;">
+            <h1>🔔 Notification Settings</h1>
+            <p>Manage your mobile notification preferences</p>
+        </header>
+        
+        <!-- Permission Status -->
+        <div id="permission-status" class="permission-status">
+            <div id="permission-text">Checking notification permissions...</div>
+            <button id="enable-notifications" class="test-notification-btn" style="margin-top: 10px; display: none;">
+                Enable Notifications
+            </button>
+        </div>
+        
+        <!-- General Settings -->
+        <div class="settings-section">
+            <h3>📱 General Settings</h3>
+            
+            <div class="setting-item">
+                <div class="setting-label">
+                    <h4>Enable Notifications</h4>
+                    <p>Receive push notifications for important updates</p>
+                </div>
+                <div class="toggle-switch" id="toggle-enabled" onclick="toggleSetting('enabled')"></div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">
+                    <h4>Sound</h4>
+                    <p>Play sound with notifications</p>
+                </div>
+                <div class="toggle-switch" id="toggle-sound" onclick="toggleSetting('sound')"></div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">
+                    <h4>Vibration</h4>
+                    <p>Vibrate device for notifications</p>
+                </div>
+                <div class="toggle-switch" id="toggle-vibration" onclick="toggleSetting('vibration')"></div>
+            </div>
+        </div>
+        
+        <!-- Notification Types -->
+        <div class="settings-section notification-types">
+            <h3>🤖 Notification Types</h3>
+            
+            <div class="setting-item">
+                <div class="setting-label">
+                    <h4>Decision Updates</h4>
+                    <p>New decisions from AI executives</p>
+                </div>
+                <div class="toggle-switch" id="toggle-decisions" onclick="toggleSetting('decisions')"></div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">
+                    <h4>Collaboration</h4>
+                    <p>Comments and team collaboration updates</p>
+                </div>
+                <div class="toggle-switch" id="toggle-collaborations" onclick="toggleSetting('collaborations')"></div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">
+                    <h4>System Updates</h4>
+                    <p>App updates and system messages</p>
+                </div>
+                <div class="toggle-switch" id="toggle-system" onclick="toggleSetting('system')"></div>
+            </div>
+        </div>
+        
+        <!-- Quiet Hours -->
+        <div class="settings-section">
+            <h3>🌙 Quiet Hours</h3>
+            
+            <div class="setting-item">
+                <div class="setting-label">
+                    <h4>Enable Quiet Hours</h4>
+                    <p>Disable notifications during specified hours</p>
+                </div>
+                <div class="toggle-switch" id="toggle-quiet-hours" onclick="toggleSetting('quietHours.enabled')"></div>
+            </div>
+            
+            <div id="quiet-hours-settings" style="display: none;">
+                <div class="time-input">
+                    <label>From:</label>
+                    <input type="time" id="quiet-start" value="22:00" onchange="updateQuietHours()">
+                    <label>To:</label>
+                    <input type="time" id="quiet-end" value="08:00" onchange="updateQuietHours()">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test Notification -->
+        <div class="settings-section">
+            <h3>🧪 Test Notifications</h3>
+            <p>Send a test notification to verify your settings</p>
+            <button id="test-notification" class="test-notification-btn" onclick="testNotification()">
+                Send Test Notification
+            </button>
+        </div>
+        
+        <!-- Actions -->
+        <div class="settings-section">
+            <h3>⚙️ Actions</h3>
+            
+            <button class="test-notification-btn" onclick="clearAllNotifications()" 
+                    style="background: #e53e3e; margin-bottom: 10px;">
+                Clear All Notifications
+            </button>
+            
+            <button class="test-notification-btn" onclick="resetSettings()" 
+                    style="background: #718096;">
+                Reset to Defaults
+            </button>
+        </div>
+    </div>
+    
+    <script src="/static/js/mobile-notifications.js"></script>
+    <script>
+        let currentPreferences = {};
+        
+        // Initialize settings page
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializeSettings();
+            updatePermissionStatus();
+            loadPreferences();
+        });
+        
+        async function initializeSettings() {
+            // Wait for notification service to be available
+            let attempts = 0;
+            while (!window.notificationService && attempts < 50) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            if (!window.notificationService) {
+                console.error('Notification service not available');
+                document.getElementById('permission-text').textContent = 
+                    'Notification service not available on this device';
+                return;
+            }
+        }
+        
+        function updatePermissionStatus() {
+            const statusDiv = document.getElementById('permission-status');
+            const textDiv = document.getElementById('permission-text');
+            const enableBtn = document.getElementById('enable-notifications');
+            
+            if (!window.notificationService) {
+                statusDiv.className = 'permission-status permission-denied';
+                textDiv.textContent = 'Notifications not supported on this device';
+                return;
+            }
+            
+            const permission = window.notificationService.permission;
+            
+            switch (permission) {
+                case 'granted':
+                    statusDiv.className = 'permission-status permission-granted';
+                    textDiv.textContent = '✅ Notifications are enabled';
+                    enableBtn.style.display = 'none';
+                    break;
+                case 'denied':
+                    statusDiv.className = 'permission-status permission-denied';
+                    textDiv.textContent = '❌ Notifications are blocked. Please enable in browser settings.';
+                    enableBtn.style.display = 'none';
+                    break;
+                default:
+                    statusDiv.className = 'permission-status permission-default';
+                    textDiv.textContent = '⚠️ Notification permission not granted';
+                    enableBtn.style.display = 'block';
+            }
+        }
+        
+        function loadPreferences() {
+            if (!window.notificationService) return;
+            
+            currentPreferences = window.notificationService.getPreferences();
+            
+            // Update toggle switches
+            updateToggle('enabled', currentPreferences.enabled);
+            updateToggle('sound', currentPreferences.sound);
+            updateToggle('vibration', currentPreferences.vibration);
+            updateToggle('decisions', currentPreferences.decisions);
+            updateToggle('collaborations', currentPreferences.collaborations);
+            updateToggle('system', currentPreferences.system);
+            updateToggle('quiet-hours', currentPreferences.quietHours.enabled);
+            
+            // Update quiet hours inputs
+            document.getElementById('quiet-start').value = currentPreferences.quietHours.start;
+            document.getElementById('quiet-end').value = currentPreferences.quietHours.end;
+            
+            // Show/hide quiet hours settings
+            const quietHoursSettings = document.getElementById('quiet-hours-settings');
+            quietHoursSettings.style.display = currentPreferences.quietHours.enabled ? 'block' : 'none';
+        }
+        
+        function updateToggle(id, enabled) {
+            const toggle = document.getElementById(`toggle-${id}`);
+            if (toggle) {
+                toggle.classList.toggle('active', enabled);
+            }
+        }
+        
+        async function toggleSetting(setting) {
+            if (!window.notificationService) return;
+            
+            const keys = setting.split('.');
+            let current = currentPreferences;
+            
+            // Navigate to the nested property
+            for (let i = 0; i < keys.length - 1; i++) {
+                current = current[keys[i]];
+            }
+            
+            // Toggle the final property
+            const finalKey = keys[keys.length - 1];
+            current[finalKey] = !current[finalKey];
+            
+            // Special handling for main enabled toggle
+            if (setting === 'enabled' && current[finalKey]) {
+                const success = await window.notificationService.enable();
+                if (!success) {
+                    current[finalKey] = false;
+                    updatePermissionStatus();
+                    return;
+                }
+                updatePermissionStatus();
+            }
+            
+            // Update the service
+            window.notificationService.updatePreferences(currentPreferences);
+            
+            // Update UI
+            updateToggle(setting.replace('.', '-'), current[finalKey]);
+            
+            // Show/hide quiet hours settings
+            if (setting === 'quietHours.enabled') {
+                const quietHoursSettings = document.getElementById('quiet-hours-settings');
+                quietHoursSettings.style.display = current[finalKey] ? 'block' : 'none';
+            }
+        }
+        
+        function updateQuietHours() {
+            if (!window.notificationService) return;
+            
+            const start = document.getElementById('quiet-start').value;
+            const end = document.getElementById('quiet-end').value;
+            
+            currentPreferences.quietHours.start = start;
+            currentPreferences.quietHours.end = end;
+            
+            window.notificationService.updatePreferences(currentPreferences);
+        }
+        
+        async function enableNotifications() {
+            if (!window.notificationService) return;
+            
+            try {
+                const success = await window.notificationService.enable();
+                if (success) {
+                    currentPreferences.enabled = true;
+                    updateToggle('enabled', true);
+                    updatePermissionStatus();
+                }
+            } catch (error) {
+                alert('Failed to enable notifications: ' + error.message);
+            }
+        }
+        
+        async function testNotification() {
+            if (!window.notificationService) {
+                alert('Notification service not available');
+                return;
+            }
+            
+            const btn = document.getElementById('test-notification');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            
+            try {
+                await window.notificationService.testNotification();
+                btn.textContent = 'Test Sent!';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = 'Send Test Notification';
+                }, 2000);
+            } catch (error) {
+                alert('Failed to send test notification: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = 'Send Test Notification';
+            }
+        }
+        
+        function clearAllNotifications() {
+            if (!window.notificationService) return;
+            
+            if (confirm('Clear all notifications?')) {
+                window.notificationService.clearAllNotifications();
+                alert('All notifications cleared');
+            }
+        }
+        
+        function resetSettings() {
+            if (!confirm('Reset all notification settings to defaults?')) {
+                return;
+            }
+            
+            if (window.notificationService) {
+                // Reset to default preferences
+                const defaults = {
+                    enabled: true,
+                    decisions: true,
+                    collaborations: true,
+                    system: true,
+                    sound: true,
+                    vibration: true,
+                    quietHours: {
+                        enabled: false,
+                        start: '22:00',
+                        end: '08:00'
+                    }
+                };
+                
+                window.notificationService.updatePreferences(defaults);
+                loadPreferences();
+                alert('Settings reset to defaults');
+            }
+        }
+        
+        // Set up enable notifications button
+        document.getElementById('enable-notifications').onclick = enableNotifications;
+    </script>
+</body>
+</html>

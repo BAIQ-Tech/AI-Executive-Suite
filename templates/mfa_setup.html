@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Factor Authentication Setup - AI Executive Suite</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .mfa-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .mfa-method {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            background: #f9f9f9;
+        }
+        
+        .mfa-method.enabled {
+            border-color: #28a745;
+            background: #f8fff9;
+        }
+        
+        .mfa-method h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .qr-code {
+            text-align: center;
+            margin: 1rem 0;
+        }
+        
+        .qr-code img {
+            max-width: 200px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: white;
+        }
+        
+        .backup-codes {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .backup-codes h4 {
+            color: #856404;
+            margin-top: 0;
+        }
+        
+        .backup-code-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .backup-code {
+            background: white;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-right: 0.5rem;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        
+        .alert {
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        
+        .alert-info {
+            color: #0c5460;
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        
+        .status-enabled {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-disabled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="mfa-container">
+        <h1>Multi-Factor Authentication Setup</h1>
+        <p>Secure your account with an additional layer of protection. Choose one or more authentication methods below.</p>
+        
+        <div id="alerts"></div>
+        
+        <!-- MFA Status -->
+        <div class="mfa-method">
+            <h3>Current Status</h3>
+            <p>MFA Status: <span id="mfa-status" class="status-badge status-disabled">Disabled</span></p>
+            <p>Active Methods: <span id="active-methods">None</span></p>
+            <p>Backup Codes: <span id="backup-codes-count">0</span> remaining</p>
+        </div>
+        
+        <!-- TOTP Setup -->
+        <div class="mfa-method" id="totp-method">
+            <h3>🔐 Authenticator App (TOTP)</h3>
+            <p>Use an authenticator app like Google Authenticator, Authy, or 1Password to generate time-based codes.</p>
+            
+            <div id="totp-setup" class="hidden">
+                <div class="qr-code">
+                    <p>Scan this QR code with your authenticator app:</p>
+                    <img id="qr-code-img" src="" alt="QR Code">
+                    <p>Or enter this secret manually: <code id="totp-secret"></code></p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="totp-token">Enter the 6-digit code from your app:</label>
+                    <input type="text" id="totp-token" maxlength="6" placeholder="123456">
+                </div>
+                
+                <button class="btn btn-success" onclick="verifyTOTP()">Verify & Enable</button>
+                <button class="btn btn-secondary" onclick="cancelTOTPSetup()">Cancel</button>
+            </div>
+            
+            <div id="totp-controls">
+                <button class="btn" onclick="setupTOTP()">Setup TOTP</button>
+                <button class="btn btn-danger hidden" onclick="disableMFA('totp')">Disable</button>
+            </div>
+        </div>
+        
+        <!-- SMS Setup -->
+        <div class="mfa-method" id="sms-method">
+            <h3>📱 SMS Verification</h3>
+            <p>Receive verification codes via text message to your phone.</p>
+            
+            <div id="sms-setup" class="hidden">
+                <div class="form-group">
+                    <label for="phone-number">Phone Number (with country code):</label>
+                    <input type="tel" id="phone-number" placeholder="+1234567890">
+                </div>
+                
+                <button class="btn" onclick="sendSMSCode()">Send Verification Code</button>
+                
+                <div id="sms-verify" class="hidden">
+                    <div class="form-group">
+                        <label for="sms-code">Enter the 6-digit code sent to your phone:</label>
+                        <input type="text" id="sms-code" maxlength="6" placeholder="123456">
+                    </div>
+                    
+                    <button class="btn btn-success" onclick="verifySMS()">Verify & Enable</button>
+                    <button class="btn btn-secondary" onclick="cancelSMSSetup()">Cancel</button>
+                </div>
+            </div>
+            
+            <div id="sms-controls">
+                <button class="btn" onclick="setupSMS()">Setup SMS</button>
+                <button class="btn btn-danger hidden" onclick="disableMFA('sms')">Disable</button>
+            </div>
+        </div>
+        
+        <!-- Email Setup -->
+        <div class="mfa-method" id="email-method">
+            <h3>📧 Email Verification</h3>
+            <p>Receive verification codes via email.</p>
+            
+            <div id="email-setup" class="hidden">
+                <div class="form-group">
+                    <label for="email-address">Email Address:</label>
+                    <input type="email" id="email-address" placeholder="your@email.com">
+                </div>
+                
+                <button class="btn" onclick="sendEmailCode()">Send Verification Code</button>
+                
+                <div id="email-verify" class="hidden">
+                    <div class="form-group">
+                        <label for="email-code">Enter the 6-digit code sent to your email:</label>
+                        <input type="text" id="email-code" maxlength="6" placeholder="123456">
+                    </div>
+                    
+                    <button class="btn btn-success" onclick="verifyEmail()">Verify & Enable</button>
+                    <button class="btn btn-secondary" onclick="cancelEmailSetup()">Cancel</button>
+                </div>
+            </div>
+            
+            <div id="email-controls">
+                <button class="btn" onclick="setupEmail()">Setup Email</button>
+                <button class="btn btn-danger hidden" onclick="disableMFA('email')">Disable</button>
+            </div>
+        </div>
+        
+        <!-- Backup Codes -->
+        <div class="mfa-method" id="backup-codes-section">
+            <h3>🔑 Backup Codes</h3>
+            <p>Generate backup codes that can be used if you lose access to your other MFA methods.</p>
+            
+            <div id="backup-codes-display" class="backup-codes hidden">
+                <h4>⚠️ Save these backup codes in a secure location!</h4>
+                <p>Each code can only be used once. You will not be able to see them again.</p>
+                <div id="backup-codes-list" class="backup-code-list"></div>
+            </div>
+            
+            <button class="btn btn-secondary" onclick="generateBackupCodes()">Generate New Backup Codes</button>
+        </div>
+        
+        <!-- Security Log -->
+        <div class="mfa-method">
+            <h3>🔍 Recent Activity</h3>
+            <p>Monitor recent MFA verification attempts for security.</p>
+            <div id="mfa-attempts"></div>
+            <button class="btn btn-secondary" onclick="loadMFAAttempts()">View Recent Attempts</button>
+        </div>
+    </div>
+    
+    <script>
+        // Global state
+        let mfaStatus = {
+            enabled: false,
+            methods: [],
+            backupCodesCount: 0
+        };
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMFAStatus();
+        });
+        
+        // Load MFA status
+        async function loadMFAStatus() {
+            try {
+                const response = await fetch('/api/mfa/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    mfaStatus = data;
+                    updateStatusDisplay();
+                } else {
+                    showAlert('Error loading MFA status: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Error loading MFA status: ' + error.message, 'danger');
+            }
+        }
+        
+        // Update status display
+        function updateStatusDisplay() {
+            const statusElement = document.getElementById('mfa-status');
+            const methodsElement = document.getElementById('active-methods');
+            const backupCodesElement = document.getElementById('backup-codes-count');
+            
+            if (mfaStatus.mfa_enabled) {
+                statusElement.textContent = 'Enabled';
+                statusElement.className = 'status-badge status-enabled';
+                
+                const methodNames = mfaStatus.methods.map(m => m.method_type.toUpperCase()).join(', ');
+                methodsElement.textContent = methodNames || 'None';
+                
+                // Update method controls
+                mfaStatus.methods.forEach(method => {
+                    const methodElement = document.getElementById(method.method_type + '-method');
+                    if (methodElement) {
+                        methodElement.classList.add('enabled');
+                        const setupButton = methodElement.querySelector('.btn:not(.btn-danger)');
+                        const disableButton = methodElement.querySelector('.btn-danger');
+                        if (setupButton) setupButton.textContent = 'Reconfigure';
+                        if (disableButton) disableButton.classList.remove('hidden');
+                    }
+                });
+            } else {
+                statusElement.textContent = 'Disabled';
+                statusElement.className = 'status-badge status-disabled';
+                methodsElement.textContent = 'None';
+            }
+            
+            backupCodesElement.textContent = mfaStatus.backup_codes_count || 0;
+        }
+        
+        // TOTP Setup
+        async function setupTOTP() {
+            try {
+                showLoading('totp-method');
+                
+                const response = await fetch('/api/mfa/totp/setup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('qr-code-img').src = data.qr_code;
+                    document.getElementById('totp-secret').textContent = data.secret;
+                    document.getElementById('totp-setup').classList.remove('hidden');
+                    document.getElementById('totp-controls').classList.add('hidden');
+                } else {
+                    showAlert('Error setting up TOTP: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Error setting up TOTP: ' + error.message, 'danger');
+            } finally {
+                hideLoading('totp-method');
+            }
+        }
+        
+        async function verifyTOTP() {
+            const token = document.getElementById('totp-token').value;
+            
+            if (!token || token.length !== 6) {
+                showAlert('Please enter a 6-digit code', 'danger');
+                return;
+            }
+            
+            try {
+                showLoading('totp-method');
+                
+                const response = await fetch('/api/mfa/totp/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('TOTP enabled successfully!', 'success');
+                    
+                    if (data.backup_codes) {
+                        displayBackupCodes(data.backup_codes);
+                    }
+                    
+                    cancelTOTPSetup();
+                    loadMFAStatus();
+                } else {
+                    showAlert('Error verifying TOTP: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Error verifying TOTP: ' + error.message, 'danger');
+            } finally {
+                hideLoading('totp-method');
+            }
+        }
+        
+        function cancelTOTPSetup() {
+            document.getElementById('totp-setup').classList.add('hidden');
+            document.getElementById('totp-controls').classList.remove('hidden');
+            document.getElementById('totp-token').value = '';
+        }
+        
+        // SMS Setup
+        async function setupSMS() {
+            document.getElementById('sms-setup').classList.remove('hidden');
+            document.getElementById('sms-controls').classList.add('hidden');
+        }
+        
+        async function sendSMSCode() {
+            const phoneNumber = document.getElementById('phone-number').value;
+            
+            if (!phoneNumber) {
+                showAlert('Please enter a phone number', 'danger');
+                return;
+            }
+            
+            try {
+                showLoading('sms-method');
+                
+                const response = await fetch('/api/mfa/sms/setup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone_number: phoneNumber })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    document.getElementById('sms-verify').classList.remove('hidden');
+                } else {
+                    showAlert('Error sending SMS: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Error sending SMS: ' + error.message, 'danger');
+            } finally {
+                hideLoading('sms-method');
+            }
+        }
+        
+        async function verifySMS() {
+            const code = document.getElementById('sms-code').value;
+            
+            if (!code || code.length !== 6) {
+                showAlert('Please enter a 6-digit code', 'danger');
+                return;
+            }
+            
+            try {
+                showLoading('sms-method');
+                
+                const response = await fetch('/api/mfa/sms/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('SMS MFA enabled successfully!', 'success');
+                    cancelSMSSetup();
+                    loadMFAStatus();
+                } else {
+                    showAlert('Error verifying SMS: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Error verifying SMS: ' + error.message, 'danger');
+            } finally {
+                hideLoading('sms-method');
+            }
+        }
+        
+        function cancelSMSSetup() {
+            document.getElementById('sms-setup').classList.add('hidden');
+            document.getElementById('sms-controls').classList.remove('hidden');
+            document.getElementById('sms-verify').classList.add('hidden');
+            document.getElementById('phone-number').value = '';
+            document.getElementById('sms-code').value = '';
+        }
+        
+        // Email Setup (similar to SMS)
+        async function setupEmail() {
+            document.getElementById('email-setup').classList.remove('hidden');
+            document.getElementById('email-controls').classList.add('hidden');
+        }
+        
+        async function sendEmailCode() {
+            const emailAddress = document.getElementById('email-address').value;
+            
+            try {
+                showLoading('email-method');
+                
+                const response = await fetch('/api/mfa/email/setup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email_address: emailAddress })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    document.getElementById('email-verify').classList.remove('hidden');
+                } else {
+                    showAlert('Error sending email: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Error sending email: ' + error.message, 'danger');
+            } finally {
+                hideLoading('email-method');
+            }
+        }
+        
+        async function verifyEmail() {
+            const code = document.getElementById('email-code').value;
+            
+            if (!code || code.length !== 6) {
+                showAlert('Please enter a 6-digit code', 'danger');
+                return;
+            }
+            
+            try {
+                showLoading('email-method');
+                
+                const response = await fetch('/api/mfa/email/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('Email MFA enabled successfully!', 'success');
+                    cancelEmailSetup();
+                    loadMFAStatus();
+                } else {
+                    showAlert('Error verifying email: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Error verifying email: ' + error.message, 'danger');
+            } finally {
+                hideLoading('email-method');
+            }
+        }
+        
+        function cancelEmailSetup() {
+            document.getElementById('email-setup').classList.add('hidden');
+            document.getElementById('email-controls').classList.remove('hidden');
+            document.getElementById('email-verify').classList.add('hidden');
+            document.getElementById('email-address').value = '';
+            document.getElementById('email-code').value = '';
+        }
+        
+        // Disable MFA method
+        async function disableMFA(methodType) {
+            if (!confirm(`Are you sure you want to disable ${methodType.toUpperCase()} MFA?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/mfa/disable/${methodType}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    loadMFAStatus();
+                } else {
+                    showAlert('Error disabling MFA: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Error disabling MFA: ' + error.message, 'danger');
+            }
+        }
+        
+        // Generate backup codes
+        async function generateBackupCodes() {
+            if (!mfaStatus.mfa_enabled) {
+                showAlert('Please enable at least one MFA method first', 'info');
+                return;
+            }
+            
+            if (!confirm('This will invalidate any existing backup codes. Continue?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/mfa/backup-codes/regenerate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayBackupCodes(data.backup_codes);
+                    showAlert(data.message, 'success');
+                    loadMFAStatus();
+                } else {
+                    showAlert('Error generating backup codes: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Error generating backup codes: ' + error.message, 'danger');
+            }
+        }
+        
+        // Display backup codes
+        function displayBackupCodes(codes) {
+            const listElement = document.getElementById('backup-codes-list');
+            listElement.innerHTML = '';
+            
+            codes.forEach(code => {
+                const codeElement = document.createElement('div');
+                codeElement.className = 'backup-code';
+                codeElement.textContent = code;
+                listElement.appendChild(codeElement);
+            });
+            
+            document.getElementById('backup-codes-display').classList.remove('hidden');
+        }
+        
+        // Load MFA attempts
+        async function loadMFAAttempts() {
+            try {
+                const response = await fetch('/api/mfa/attempts');
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayMFAAttempts(data.attempts);
+                } else {
+                    showAlert('Error loading MFA attempts: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Error loading MFA attempts: ' + error.message, 'danger');
+            }
+        }
+        
+        // Display MFA attempts
+        function displayMFAAttempts(attempts) {
+            const container = document.getElementById('mfa-attempts');
+            
+            if (attempts.length === 0) {
+                container.innerHTML = '<p>No recent MFA attempts.</p>';
+                return;
+            }
+            
+            let html = '<table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">';
+            html += '<tr style="background: #f8f9fa;"><th style="padding: 0.5rem; border: 1px solid #ddd;">Method</th><th style="padding: 0.5rem; border: 1px solid #ddd;">Status</th><th style="padding: 0.5rem; border: 1px solid #ddd;">IP Address</th><th style="padding: 0.5rem; border: 1px solid #ddd;">Time</th></tr>';
+            
+            attempts.forEach(attempt => {
+                const statusClass = attempt.success ? 'color: green;' : 'color: red;';
+                const statusText = attempt.success ? 'Success' : 'Failed';
+                const time = new Date(attempt.timestamp).toLocaleString();
+                
+                html += `<tr>
+                    <td style="padding: 0.5rem; border: 1px solid #ddd;">${attempt.method_type.toUpperCase()}</td>
+                    <td style="padding: 0.5rem; border: 1px solid #ddd; ${statusClass}">${statusText}</td>
+                    <td style="padding: 0.5rem; border: 1px solid #ddd;">${attempt.ip_address}</td>
+                    <td style="padding: 0.5rem; border: 1px solid #ddd;">${time}</td>
+                </tr>`;
+            });
+            
+            html += '</table>';
+            container.innerHTML = html;
+        }
+        
+        // Utility functions
+        function showAlert(message, type) {
+            const alertsContainer = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            alertsContainer.appendChild(alert);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            }, 5000);
+        }
+        
+        function showLoading(elementId) {
+            document.getElementById(elementId).classList.add('loading');
+        }
+        
+        function hideLoading(elementId) {
+            document.getElementById(elementId).classList.remove('loading');
+        }
+    </script>
+</body>
+</html>
